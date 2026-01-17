@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday My Love</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Mali', cursive;
+            background-color: #ffe4e6;
+            background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: hidden;
+            height: 100vh; width: 100vw;
+            display: flex; justify-content: center;
+            align-items: center;
+            margin: 0; touch-action: none;
+        }
+
+        /* --- Envelope --- */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            z-index: 50;
+            width: 300px;
+            height: 200px;
+            transition: transform 0.3s ease;
+        }
+        .envelope-wrapper:hover { transform: scale(1.05); }
+
+        .envelope {
+            position: relative;
+            width: 100%; height: 100%;
+            background-color: #f43f5e;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 15px 35px rgba(244, 63, 94, 0.4);
+        }
+
+        .lid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 110px;
+            background-color: #f43f5e;
+            clip-path: polygon(0 0, 50% 100%, 100% 0);
+            transform-origin: top;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 40;
+        }
+        .lid.open { transform: rotateX(180deg); z-index: 1; }
+
+        .pocket {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 110px;
+            background-color: #e11d48;
+            clip-path: polygon(0 100%, 50% 0, 100% 100%);
+            z-index: 30;
+            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+        }
+
+        /* --- Letter --- */
+        .letter {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 90vw; height: 85vh;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 60;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; flex-direction: column;
+            padding: 20px;
+            opacity: 0; pointer-events: none;
+            border: 4px solid #fff0f3;
+        }
+
+        .letter.pulled {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1; pointer-events: auto;
+        }
+
+        /* --- Card Stack --- */
+        .card-stack-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            margin-bottom: 10px;
+            perspective: 1000px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .polaroid-card {
+            position: absolute;
+            width: 280px; height: 350px; /* Fix size for better stacking */
+            background: white;
+            padding: 15px 15px 50px 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
+            border-radius: 4px;
+            cursor: grab;
+            touch-action: none;
+            will-change: transform;
+            transform-origin: center 80%;
+        }
+        .polaroid-card:active { cursor: grabbing; }
+
+        .polaroid-card img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 2px;
+            pointer-events: none;
+            background: #f0f0f0; /* Placeholder color */
+        }
+
+        .polaroid-caption {
+            position: absolute;
+            bottom: 5px; left: 0; width: 100%; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; color: #444;
+            font-family: 'Mali', cursive;
+        }
+
+        /* --- Lyrics & Wishes --- */
+        .lyrics-box {
+            height: 50px; overflow: hidden;
+            text-align: center; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lyric-line { 
+            font-size: 14px; color: #fb7185; 
+            transition: 0.4s ease-out; opacity: 0.6; transform: scale(0.9);
+        }
+        .lyric-line.active { 
+            color: #e11d48; font-weight: bold;
+            font-size: 16px; opacity: 1; transform: scale(1.1); 
+            text-shadow: 0 2px 4px rgba(244, 63, 94, 0.2);
+        }
+
+        .wishes-container {
+            flex-grow: 1; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; border: 2px dashed #fda4af;
+            border-radius: 15px; background: #fffafb;
+            overflow-y: auto;
+        }
+
+        /* --- Music Bar --- */
+        .music-player {
+            height: 50px; background: #fff1f2;
+            border-radius: 25px; padding: 0 15px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; width: 60px; height: 60px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 45; color: #f43f5e; font-size: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            animation: beat 1.5s infinite;
+            cursor: pointer;
+        }
+        @keyframes beat { 
+            0%, 100% { transform: translate(-50%, -50%) scale(1); } 
+            50% { transform: translate(-50%, -50%) scale(1.15); } 
+        }
+
+        .fly-right { transform: translateX(100vw) rotate(45deg) !important; transition: 0.8s ease-out; opacity: 0; }
+        .fly-left { transform: translateX(-100vw) rotate(-45deg) !important; transition: 0.8s ease-out; opacity: 0; }
+
+        .typing-cursor::after { content: '|'; animation: blink 1s step-end infinite; color: #f43f5e; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #fda4af; border-radius: 10px; }
+        /* เพิ่มในส่วน <style> */
+        @keyframes bounceIn {
+            0%, 20%, 40%, 60%, 80%, 100% { transition-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000); }
+            0% { opacity: 0; transform: scale3d(.3, .3, .3); }
+            20% { transform: scale3d(1.1, 1.1, 1.1); }
+            40% { transform: scale3d(.9, .9, .9); }
+            60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+            80% { transform: scale3d(.97, .97, .97); }
+            100% { opacity: 1; transform: scale3d(1, 1, 1); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.75s; }
+    </style>
+</head>
+<body>
+
+    <div class="envelope-wrapper" id="envWrapper" onclick="openLetter()">
+        <div class="envelope">
+            <div class="lid" id="lid"></div>
+            <div class="pocket"></div>
+            <div class="heart-seal"><i class="fas fa-heart"></i></div>
+        </div>
+        <div class="absolute bottom-[-50px] w-full text-center text-rose-600 font-bold animate-bounce drop-shadow-sm">จิ้มเพื่อเปิดเลย ✨</div>
+    </div>
+
+    <div class="letter" id="letter">
+        <h2 class="text-2xl text-rose-600 font-bold text-center mb-2 drop-shadow-sm">Happy Birthday ❤️</h2>
+        
+        <div id="photoSection" class="flex flex-col flex-grow relative w-full h-full overflow-hidden">
+            <div class="card-stack-container" id="cardStack"></div>
+            <div class="lyrics-box" id="lyricsBox">
+                <span class="text-xs text-rose-300">...รอฟังเพลงนะ...</span>
+            </div>
+            <p class="text-[12px] text-rose-400 text-center animate-pulse mb-1 bg-white/50 py-1 rounded-full">
+                <i class="fas fa-hand-pointer"></i> ปัดรูปไปทางซ้ายหรือขวา
+            </p>
+        </div>
+
+        <div id="wishesSection" class="wishes-container">
+            <p id="wishesText" class="text-base text-gray-700 leading-8 font-mali text-center"></p>
+            <div class="mt-6 text-center space-y-4">
+                <i class="fas fa-gift text-4xl text-rose-500 animate-bounce cursor-pointer hover:scale-110 transition" onclick="showGiftSurprise()"></i>
+                <div class="text-xs text-rose-400">(จิ้มของขวัญสิ)</div>
+                <button onclick="replayPhotos()" class="text-xs text-gray-400 underline mt-4 hover:text-rose-500 transition">กลับไปหน้าแรก</button>
+            </div>
+        </div>
+
+        <div class="music-player">
+            <button onclick="toggleMusic(event)" class="w-8 h-8 flex items-center justify-center bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-md transition">
+                <i class="fas fa-pause text-xs" id="playIcon"></i>
+            </button>
+            <div class="flex-grow h-1.5 bg-gray-200 rounded-full ml-3 overflow-hidden cursor-pointer" onclick="seekAudio(event)">
+                <div id="progBar" class="h-full bg-rose-500 transition-all duration-100" style="width:0%"></div>
+            </div>
+            <div id="timeDisplay" class="text-[10px] text-rose-400 w-8 text-right font-mono">0:00</div>
+        </div>
+    </div>
+
+<div id="giftModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] backdrop-blur-sm transition-all">
+    <div class="bg-white p-6 rounded-3xl max-w-[85vw] w-[350px] relative shadow-2xl transform scale-90 opacity-0 transition-all duration-300" id="modalBox">
+        <button onclick="closeGiftModal()" class="absolute top-3 right-4 text-gray-400 hover:text-rose-500 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <div class="rounded-xl overflow-hidden shadow-md mb-4 border-2 border-rose-100">
+            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEgL342Acvo3m_QhsbtDgXlffVnSTzj_xXoc5c5-F9BY4Bx1D6WHeMu9mRdYxiQb1XUpfPVi7P9aklZAvwhpLPI21hQUhkZMOse7Qegs0M5rRdxU5IkdwvS-TQagNpGsxdfRcGGGEDpEO7k5wJY4lFZE8gGksYun0eyU9cVxblUmh2QgnpgcTwkuSSo5pYeD" 
+                 alt="Surprise Gift" 
+                 class="w-full h-auto object-cover">
+        </div>
+
+        <h3 class="text-xl font-bold text-rose-600 text-center mb-2">เซอร์ไพรส์! 🎉</h3>
+        <p class="text-gray-700 text-center leading-relaxed font-mali">
+            ของขวัญปีนี้... <br>
+            <span class="font-bold text-rose-500 text-lg">ก็ตัวเค้าไง!</span> 😜 <br>
+            (ห้ามคืน ห้ามเปลี่ยน ห้ามบ่น!) <br>
+            รักนะจุ๊บๆ ❤️
+        </p>
+    </div>
+</div>
+
+    <audio id="music" loop></audio>
+
+    <script>
+        const photos = [
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEhMbHgZn7K6NJNuBaCcW5w6ArrwnxFXm7G6ZhojyDxCtASKJbcyBqMThTxK-MjOX0ipWT2WcnaAwTPF36lxLA96q4FujVT-HxJlVz2sDI56vQYxVaVhox4BAh1D_FrPiEwHmuVTFcJtmosUvvarHkfQGUOB3d8pAl43m_ziOlcTGeaCM7t8xf7QvUw1Odiq", cap: "สมัยไหนแล้วก็ไม่รู้จำไม่ได้ ❤️" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEjlYvHv_d0GgpygiFYLdgwOrsQjf84nqKJnGPC0YgSxCsi33purd6cN_tht1KYkugamUDL6MPqA0AHcRL2uAOiS2DeP4MEb_RBtne-oEcuZMSUzP_tE0cssjsmOXhpdfFs8E8Y36u8D6XdDMPBomAWkko4UVrd2BiDuGccsW7y-g9yAWFHXF6NLqgH1d7M4", cap: "27 ต.ค. 59 กาญจนบุรี" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEhr3B_Rly3CAj5bLPjG-4ibWy1KTVeox7bMP0x5hAfuFU0zfJsVg0EOwOuresuXuoI-aEUtuKNVuVHFekRIY0-4q9Wssdi2EIERd6u-ZiSZM0rwC9PD5J-BJ4yZ9utBXvh2FVPSNHCCVFXJLGlphBF6USCGNunR0G5Ydcuj09fKscM3Cq8GjMJzPBJ-XAhk", cap: "23 ต.ค. 60 จับมือกันไว้" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEjwwTsuPdF9Nak7kSiwOO7DcLeG-1Me_g5il8b1AQlZUT3q73Hs9_TWBJOq6MRZz3Kpk7JBTa9BQqz_qa-ia7o8_Xq4wjHCDWOyPZv0c-ZejvfR9feZGFztuzv3DLkKUYUQaNPcdqoU_j7ByfZB88k3IP7onZ59h7L9LeQVlBETL76DlgMDKX8WpTUfDAZ1", cap: "29 ก.ค. 61 กาญจนบุรีอีกแล้ว!" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEhYR5SBx7bebhgt832Vr1f5ULScVFfOIfbPoZO4rFWDwnHCKmxYVVS7t-98WQLkgQxAgecIBBrDzmjUKiA9gALeO58L30hI6PR8xboUf9LxfRwmTQF6Oh9W3fzs9BQxCSEHrFy5JtcJFhro0mgyYUrVdPbQ_dkz1A9xTrE2vKh_WKj7mhqA51SwCYcQDATc", cap: "27 ส.ค. 62 วัยรุ่นสร้างตัว" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEiA4DCagNpTnivmNtvBgmFxQoBckzTyGJF20pfjsEA0Nu2SR1iWwSArQDyR2VqKKMfDxw1MdFCGiAy-3NBJfKc9EGPuQOQfXXfMIocVzzrhfBRBHb-YgXe4u4RwaNDhYBe10GmXJ27lmw1rYeFNNFBcIPV-1tD3fZiQVT89h81t5uf6d_iswTGZctsyqBG2", cap: "6 ม.ค. 63 แก้ปีชงสะหน่อย" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEgrY9rs4__70tHCt982z5jBbNrn9Ixm5863kQynqDS3ZeTluqcjnInMzxClNINro8EJ8m53yBvUI5Lr3W3QxEIT_GOUYYKlaEP1a4HI61ytqQk-XKV5HkHg6xF5J93Nj4afHgG8RlIyRzn3FKwchGANxwYzHjV3Nkk3RsmFIaU8wHsFN6WgyCSifCSFk5eW", cap: "4 ธ.ค. 63 (แถมมันสวยดี^^)" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEhEu1ZnjVac1djuX-unJsXqQxejPQxt8eBtBfjAGI8AkD7njLQs31MweLn-PZW0vYGK1T4KspF_OZpKQHi-NVo3GQD_DoMV-xR_R9FyvX4JTGmQlldd__3I8zQnW2nhdXDSXAbxMZpLC7WNEhVtbCwCWoumBoUR3UHVRTR9fmgeb8OZZ0TD8GjAi6Sz9XCQ", cap: "26 มิ.ย. 64 โควิดก็ออกกำลังกาย" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEhlqmgz-Pkhf6Jek1CQ2dPqLD3hBCku11EjXdoIpAeYFeKLSN2vJvsad-VIbnuAeDUFIH3pNDEyznVy5wannJlDVIrPO0SpnXAqV5h1iWAbKitJam39Bk16D6EQQEc96ZCcCsnb9hT9k2_4XFsIkeDCUSAG8aZfPG_wtQHLK9_Vzgw-Mgrf3KTW3CFiDufz", cap: "18 ต.ค. 65 เติมพลังก่อนทำงาน" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEiM54-sTybrfNuzaid-Hk86gBtGI4pSNE57Ts8invtulJOXjZ0MayJAkvrRWs1BrUZt77GMJsGJOQ7wQEhOFp_PWZ1UDxhlrKjdt6ZS5A5isvbJsMEUktXgmmcjRTYG8Py3O9VZqL8KWk4MG05Ita_EqgmBkUrAPpHXUcayzUeDbTN_jv8N6cXMtlb0EyPd", cap: "13 พ.ย. 66 ชอบรูปนี้สุดแล้ว ^^" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEiyAjVCLg822_yKPeR70xeQuOnJ3AiUlUZIhi45qwphXrMDwmHyz1B6_aLxphgXbxNXIUvvVhabTP22O_LStnwRU_ensYOEgh9mJsUTY7SAiTidxy76YNGHsP4Lx8zxX_zNlGpFpiYzizpqjdvrKIUnIIKW9di8fIHZkVIVKCkH9pSCzcia0jiIMaI1CCUR", cap: "16 ต.ค. 67 มวกเหล็กคุ้มสุดแล้ว✨" },
+            { src: "https://blogger.googleusercontent.com/img/a/AVvXsEgL3uqVzAUsoI7j96mpkIDYHMlcf-y4mbWUmbEqJX8xfaI2neqlbs4IEYpf22tM3ptnZu276crwC0QRkZBsqIERSoQSKj8ksTP6LkMG97k61d01gSkMsQMQRJ5hoVe0KsP1yn5Kfg-YIyFGG5wB3ns0RMc1L8tJtS5cE8XaP5RU4UQ3AVHMs2gtJ3xvewdI", cap: "14 ธ.ค. 68 ณ.หาดแหลมเจริญ 🌊" }
+        ];
+
+        const lyrics = [
+            { t: 5, m: "เมื่อฉันลืมตา..." }, 
+            { t: 10, m: "ก็ขอแค่ได้มองเห็นเธออยู่กับฉัน" }, 
+            { t: 17, m: "หนทางจะไกล..." },
+            { t: 20, m: "สุดขอบฟ้าไม่หวั่น" },
+            { t: 24, m: "ได้รางวัลเป็นเธอมาแล้ว" }, 
+            { t: 28, m: "ถึงล้มก็รู้ ว่ายังมีมือของเธอ" },
+            { t: 31, m: "ถึงฉันนั้นพลั้งหรือพลาดอะไรไป" },
+            { t: 34, m: "อย่างน้อยยังมีเธอ เป็นเหมือนเส้นชัย" }, 
+            { t: 40, m: "และทุก ๆ ครั้ง" },
+            { t: 42, m: "ที่เสียอะไรไปเท่าไร" },
+            { t: 43, m: "ก็คิดทุกครั้งว่าได้อะไรมา" },
+            { t: 46, m: "และพบว่าฉันโชคดีสักเพียงใด" },
+            { t: 51, m: "ที่พบเธอ..." }, 
+            { t: 58, m: "อยู่กันอย่างนี้นานๆ นะเธอ" }, 
+            { t: 64, m: "จากกันวันไหน ฟ้าคงผิดหวัง" },
+            { t: 70, m: "อยู่กันตรงนี้หัวใจจะฝากฝัง" },
+            { t: 76, m: "ใส่มือเธอนั้น" },
+            { t: 79, m: "อย่าไปไหน อย่าไปไหน อย่าไปไหน" },
+            { t: 89, m: "ผิดความตั้งใจ..." },
+            { t: 91, m: "ที่เป็นของฟ้า" },
+        ];
+
+        const wish = "สุขสันต์วันเกิดนะอ้วน ! 🎉\n\nแก่ขึ้นอีกปีแล้วนะ! ขอบคุณที่อยู่ด้วยกันมาตลอด ช่วงเวลาที่ผ่านมาอาจมีความทุกข์มากกว่าสุข แต่แกก็ไม่ทิ้งเค้าไปไหนเลย ขอบคุณสำหรับทุกอย่างนะ...\n\nขอให้ปีนี้เป็นปีที่ดี ยิ้มเยอะๆ มีความสุขมากๆ รักนะ! 💖";
+
+        const audio = document.getElementById("music");
+        const cardStack = document.getElementById("cardStack");
+        let currentLyricIdx = -1;
+        let isOpened = false;
+
+        function openLetter() {
+            if(isOpened) return;
+            isOpened = true;
+            document.getElementById("lid").classList.add("open");
+            
+            // Fire confetti!
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            setTimeout(() => {
+                document.getElementById("envWrapper").style.display = "none";
+                document.getElementById("letter").classList.add("pulled");
+                
+                audio.src = "https://res.cloudinary.com/dmzzdwlz7/video/upload/v1768669219/%E0%B8%AD%E0%B8%A2%E0%B9%88%E0%B8%B2%E0%B8%97%E0%B9%8D%E0%B8%B2%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B8%9F%E0%B9%89%E0%B8%B2%E0%B8%9C%E0%B8%B4%E0%B8%94%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%87_mp3cut.net_1_r1mag7.mp3";
+                audio.play().catch(e => console.log("Audio autoplay block handled"));
+                
+                renderCards();
+            }, 800);
+        }
+
+        function renderCards() {
+            cardStack.innerHTML = '';
+            // Render in correct order
+            [...photos].reverse().forEach((p, i) => {
+                const card = document.createElement("div");
+                card.className = "polaroid-card";
+                
+                // Random random rotation for natural look
+                const randomRot = Math.random() * 6 - 3; // -3 to 3 deg
+                card.style.transform = `rotate(${randomRot}deg)`;
+                card.dataset.baseRot = randomRot; // Store base rotation
+                
+                card.style.zIndex = i;
+                card.innerHTML = `<img src="${p.src}" draggable="false"><div class="polaroid-caption">${p.cap}</div>`;
+                cardStack.appendChild(card);
+                initSwipe(card);
+            });
+        }
+
+        function initSwipe(el) {
+            let startX = 0, currentX = 0, isMoving = false;
+            
+            const onStart = (e) => {
+                e.preventDefault(); // Prevent scrolling on mobile
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                isMoving = true;
+                el.style.transition = 'none';
+                el.style.cursor = 'grabbing';
+            };
+
+            const onMove = (e) => {
+                if (!isMoving) return;
+                e.preventDefault();
+                currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const diff = currentX - startX;
+                const baseRot = parseFloat(el.dataset.baseRot || 0);
+                const rot = baseRot + (diff * 0.05);
+                el.style.transform = `translateX(${diff}px) rotate(${rot}deg)`;
+            };
+
+            const onEnd = () => {
+                if (!isMoving) return;
+                isMoving = false;
+                el.style.cursor = 'grab';
+                
+                const diff = currentX - startX;
+                const baseRot = parseFloat(el.dataset.baseRot || 0);
+
+                if (Math.abs(diff) > 100) {
+                    // Swipe Out
+                    const dir = diff > 0 ? 1 : -1;
+                    el.style.transition = '0.6s ease-out';
+                    el.style.transform = `translateX(${dir * 150}vw) rotate(${dir * 45}deg)`;
+                    el.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        el.remove();
+                        if (cardStack.children.length === 0) finishPhotos();
+                    }, 500);
+                } else {
+                    // Reset
+                    el.style.transition = '0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    el.style.transform = `translateX(0) rotate(${baseRot}deg)`;
+                }
+                currentX = 0; startX = 0;
+            };
+
+            // Support both Mouse and Touch
+            el.addEventListener('mousedown', onStart);
+            el.addEventListener('touchstart', onStart, { passive: false });
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, { passive: false });
+
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+        }
+
+        function finishPhotos() {
+            const photoSec = document.getElementById("photoSection");
+            photoSec.style.transition = "opacity 0.5s";
+            photoSec.style.opacity = "0";
+            
+            setTimeout(() => {
+                photoSec.style.display = "none";
+                const wishSec = document.getElementById("wishesSection");
+                wishSec.style.display = "flex";
+                // Trigger reflow
+                void wishSec.offsetWidth; 
+                
+                // Confetti again for wishes!
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#f43f5e', '#fb7185', '#ffe4e6']
+                });
+
+                typeWriter(wish, "wishesText");
+            }, 500);
+        }
+
+        function typeWriter(text, id) {
+            let i = 0;
+            const el = document.getElementById(id);
+            el.innerHTML = ""; // Clear existing text
+            el.classList.add("typing-cursor");
+            
+            function type() {
+                if (i < text.length) {
+                    const char = text.charAt(i);
+                    el.innerHTML += char === "\n" ? "<br>" : char;
+                    i++; 
+                    setTimeout(type, 50);
+                } else { 
+                    el.classList.remove("typing-cursor");
+                }
+            }
+            type();
+        }
+
+        // ฟังก์ชันเปิด Pop-up ของขวัญ
+        function showGiftSurprise() {
+            const modal = document.getElementById('giftModal');
+            const modalBox = document.getElementById('modalBox');
+
+            // 1. แสดงพื้นหลังมืด
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // 2. เล่น Animation เด้งขึ้นมา (รอแป๊บนึงเพื่อให้ CSS transition ทำงาน)
+            setTimeout(() => {
+                 modalBox.classList.remove('scale-90', 'opacity-0');
+                 modalBox.classList.add('scale-100', 'opacity-100', 'animate-bounce-in');
+            }, 50);
+
+            // 3. ยิงพลุเพิ่มความตื่นเต้น (ถ้ามี library confetti)
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.7 },
+                    zIndex: 200 // ให้พลุอยู่เหนือ Pop-up
+                });
+            }
+        }
+
+        // ฟังก์ชันปิด Pop-up (เพิ่มใหม่ต่อจากฟังก์ชันบน)
+        function closeGiftModal() {
+            const modal = document.getElementById('giftModal');
+            const modalBox = document.getElementById('modalBox');
+
+            // 1. Animation หุบลง
+            modalBox.classList.remove('scale-100', 'opacity-100', 'animate-bounce-in');
+            modalBox.classList.add('scale-90', 'opacity-0');
+
+            // 2. ซ่อนพื้นหลังมืด (รอให้ Animation จบก่อนค่อยซ่อน)
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Music Control
+        audio.ontimeupdate = () => {
+            const p = (audio.currentTime / audio.duration * 100);
+            document.getElementById("progBar").style.width = p + "%";
+            
+            // Format time
+            const m = Math.floor(audio.currentTime / 60);
+            const s = Math.floor(audio.currentTime % 60).toString().padStart(2, '0');
+            document.getElementById("timeDisplay").innerText = `${m}:${s}`;
+
+            // Lyrics Logic
+            const current = lyrics.findLast(l => audio.currentTime >= l.t);
+            if (current && lyrics.indexOf(current) !== currentLyricIdx) {
+                currentLyricIdx = lyrics.indexOf(current);
+                const box = document.getElementById("lyricsBox");
+                // Animate old out, new in
+                box.innerHTML = `<div class="lyric-line active">${current.m}</div>`;
+            }
+        };
+
+        function toggleMusic(e) {
+            e.stopPropagation();
+            const icon = document.getElementById("playIcon");
+            if (audio.paused) { 
+                audio.play(); 
+                icon.className = "fas fa-pause"; 
+            } else { 
+                audio.pause(); 
+                icon.className = "fas fa-play"; 
+            }
+        }
+
+        function seekAudio(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const p = x / rect.width;
+            audio.currentTime = p * audio.duration;
+        }
+
+        // Fix: findLast polyfill for older browsers
+        if (!Array.prototype.findLast) {
+            Array.prototype.findLast = function(predicate) {
+                for (let i = this.length - 1; i >= 0; i--) {
+                    if (predicate(this[i], i, this)) return this[i];
+                }
+                return undefined;
+            };
+        }
+
+        function replayPhotos() {
+            // 1. ซ่อนหน้าคำอวยพร
+            document.getElementById("wishesSection").style.display = "none";
+            
+            // 2. แสดงหน้ากองรูปภาพขึ้นมาใหม่
+            const photoSec = document.getElementById("photoSection");
+            photoSec.style.display = "flex";
+            
+            // สำคัญ: ต้องรีเซ็ต opacity กลับมาเป็น 1 เพราะตอนจบเราสั่งให้มันจางหายไป (fade out)
+            setTimeout(() => {
+                photoSec.style.opacity = "1";
+            }, 10);
+
+            // 3. สร้างกองการ์ดรูปภาพขึ้นมาใหม่
+            renderCards();
+            
+            // (เพิ่มเติม) ถ้าอยากให้ข้อความเนื้อเพลงกลับมาแสดงชัดๆ
+            document.getElementById("lyricsBox").style.display = "flex";
+        }
+    </script>
+</body>
+</html>
